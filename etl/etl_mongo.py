@@ -30,7 +30,10 @@ class MongoDataTransformer(DataTransformer):
     def __init__(self, config):
         self.config = config
 
-    def _clean_data(self, val):
+    def _clean_digit(self, val):
+        return ''.join(c for c in val if c.isdigit())
+    
+    def _clean_str(self, val):
         return ''.join((e.isalnum() and e or '') for e in val).upper()
     
     def transform(self, row):
@@ -41,9 +44,12 @@ class MongoDataTransformer(DataTransformer):
             val = row.get(field.source)
             indexed = getattr(field, "indexed", False)
             clean = getattr(field, "clean", False)
+            isdigit = getattr(field, "isdigit", False)
             if val:
                 if isinstance(val, list):
                     val = ' '.join(val)
+                if isdigit:
+                    val = self._clean_digit(val)
                 if indexed:
                     query = { field.name : val }    
                 ops = update.get(field.op)
@@ -54,7 +60,7 @@ class MongoDataTransformer(DataTransformer):
                     
                 if clean:
                     update.get(field.op).update(\
-                        { '_' + field.name : self._clean_data(val) })
+                        { '_' + field.name : self._clean_str(val) })
                            
         if query:
             return query,update
