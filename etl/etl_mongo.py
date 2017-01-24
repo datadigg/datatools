@@ -21,7 +21,7 @@ class MongoDataExtractor(DataExtractor):
         self.collection = self.db[mongodb.collection]
 
     def getrows(self, top=0):
-        query =  eval(self.config.argv[1])
+        query =  eval(self.config.args.query)
         logging.debug('execute query:%s' % query)
         projection = eval(self.mongodb.projection)
         return self.collection.find(query, projection)
@@ -30,7 +30,7 @@ class MongoDataTransformer(DataTransformer):
     def __init__(self, config):
         self.config = config
 
-    def clean_data(self, val):
+    def _clean_data(self, val):
         return ''.join((e.isalnum() and e or '') for e in val).upper()
     
     def transform(self, row):
@@ -54,7 +54,7 @@ class MongoDataTransformer(DataTransformer):
                     
                 if clean:
                     update.get(field.op).update(\
-                        { '_' + field.name : self.clean_data(val) })
+                        { '_' + field.name : self._clean_data(val) })
                            
         if query:
             return query,update
