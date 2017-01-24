@@ -21,14 +21,16 @@ class ConfigObjectWrapper(object):
                    if isinstance(value, dict) else value
         
 class Configuration(object):
-    def __init__(self, argv):
-        self.argv = argv
-        self.conf_dir = argv[0]
+    def __init__(self, args):
+        self.args = args
         self.settings = self.getconfig(SETTINGS_FILE)
 
     def getconfig(self, fn):
-        filepath = os.path.join(self.conf_dir,fn)
+        filepath = os.path.join(self.args.conf,fn)
         if os.path.exists(filepath):
             logging.debug('loading:%s' % filepath)
-            datadict = yaml.safe_load(open(filepath,'r'))
-            return ConfigObjectWrapper(datadict)
+            docs = yaml.load_all(open(filepath,'r'))
+            doc = next(doc for doc in docs \
+                  if doc.get('profile') == self.args.profile)
+            
+            return ConfigObjectWrapper(doc)
