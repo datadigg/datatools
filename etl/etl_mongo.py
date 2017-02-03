@@ -60,7 +60,7 @@ class MongoDataTransformer(DataTransformer):
                     
                 if clean:
                     update.get(field.op).update(\
-                        { '_' + field.name : self._clean_str(val) })
+                        { '__' + field.name : self._clean_str(val) })
                            
         if query:
             return query,update
