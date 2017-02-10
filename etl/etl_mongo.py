@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import os, logging, datetime
 from pymongo import MongoClient
-from bson.son import SON
 from etl import DataExtractor,DataLoader,DataTransformer
 
 class MongoDataExtractor(DataExtractor):
@@ -25,6 +24,9 @@ class MongoDataExtractor(DataExtractor):
         logging.debug('execute query:%s' % query)
         projection = eval(self.mongodb.projection)
         return self.collection.find(query, projection)
+    
+    def close(self):
+        self.client.close()
 
 class MongoDataTransformer(DataTransformer):
     def __init__(self, config):
@@ -82,7 +84,6 @@ class MongoDataLoader(DataLoader):
         self.collection.ensure_index(mongodb.indexKey, unique=True)
 
     def load(self, datacol):
-        indexKey = self.mongodb.indexKey
         for query,update in datacol:
             self.collection.update(query, update, upsert=True)
 
