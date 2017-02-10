@@ -17,22 +17,29 @@ class DataLoader(object):
         pass
 
 def etl(config, extractor, transformer, loader):
-    start_time = time.time()
-    total = 0
-    datacol = []
-    for row in extractor.getrows():
-        data = transformer.transform(row)
-
-        total += 1
-        sys.stdout.write('processed:%s\r' % total)
-        if data:
-            datacol.append(data)
-        if len(datacol) == config.settings.loader.autoCommitSize:
+    try:
+        start_time = time.time()
+        total = 0
+        datacol = []
+        for row in extractor.getrows():
+            data = transformer.transform(row)
+    
+            total += 1
+            sys.stdout.write('processed:%s\r' % total)
+            if data:
+                datacol.append(data)
+            if len(datacol) == config.settings.loader.autoCommitSize:
+                loader.load(datacol)
+                datacol[:] = []
+    
+        if datacol:
             loader.load(datacol)
-            datacol[:] = []
-
-    if datacol:
-        loader.load(datacol)
-    elapsed_time = time.time() - start_time
-    logging.debug('insert total:%d, execution time:%.3f' \
-          % (total, elapsed_time))
+        elapsed_time = time.time() - start_time
+        logging.debug('insert total:%d, execution time:%.3f' \
+              % (total, elapsed_time))
+    except Exception as e:
+        logging.exception(hasattr(e,'value') and e.value[1] or e)
+        raise e
+    finally:
+        if extractor: extractor.close()
+        if loader: loader.close()

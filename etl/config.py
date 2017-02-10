@@ -3,7 +3,6 @@ import os, yaml
 import logging, logging.config
 
 BASE_DIR = os.path.dirname(__file__)
-SETTINGS_FILE = 'settings.yml'
 
 loggingfilepath = os.path.join(BASE_DIR,'logging.yml')
 logging.config.dictConfig(yaml.load(open(loggingfilepath,'r')))
@@ -23,14 +22,14 @@ class ConfigObjectWrapper(object):
 class Configuration(object):
     def __init__(self, args):
         self.args = args
-        self.settings = self.getconfig(SETTINGS_FILE)
+        self.settings = self._getconfig(args, 'settings.yml')
 
-    def getconfig(self, fn):
-        filepath = os.path.join(self.args.conf,fn)
+    def _getconfig(self, args, fn):
+        filepath = os.path.join(args.conf,fn)
         if os.path.exists(filepath):
             logging.debug('loading:%s' % filepath)
             docs = yaml.load_all(open(filepath,'r'))
             doc = next(doc for doc in docs \
-                  if doc.get('profile') == self.args.profile)
+                  if doc.get('profile') == args.profile)
             
             return ConfigObjectWrapper(doc)
