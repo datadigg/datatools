@@ -29,7 +29,8 @@ class Configuration(object):
         if os.path.exists(filepath):
             logging.debug('loading:%s' % filepath)
             docs = yaml.load_all(open(filepath,'r'))
+            profile = args.profile or 'default'
             doc = next(doc for doc in docs \
-                  if doc.get('profile') == args.profile)
+                  if doc.get('profile') == profile)
             
             return ConfigObjectWrapper(doc)
