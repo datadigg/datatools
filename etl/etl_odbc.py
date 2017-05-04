@@ -6,8 +6,10 @@ from etl import DataExtractor,DataTransformer,DataLoader
 class ODBCDataExtractor(DataExtractor):
     def __init__(self, config):
         odbc = config.settings.extractor.odbc
-        logging.debug('ODBCDataExtractor connstr:%s' % odbc.connstr)
-        self.conn = pyodbc.connect(odbc.connstr)
+        connstr = config.args.dbfile \
+                  and odbc.connstr % config.args.dbfile or odbc.connstr 
+        logging.debug('ODBCDataExtractor connstr:%s' % connstr)
+        self.conn = pypyodbc.connect(connstr)
         self.cursor = self.conn.cursor()
         if odbc.table:
             self.table = odbc.table
@@ -32,19 +34,6 @@ class ODBCDataExtractor(DataExtractor):
         
     def close(self):
         self.conn.close()
-
-class ODBCDataTransformer(DataTransformer):
-    def __init__(self, config):
-        self.config = config
-    
-    def transform(self, row):
-        vals = []
-        fields = self.config.settings.transformer.mapping.fields
-        for field in fields:
-            val = row.get(field.source)
-            vals.append((field.name, val))
-                           
-        return vals
         
 
 class ODBCDataLoader(DataLoader):

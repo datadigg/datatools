@@ -9,8 +9,23 @@ class DataExtractor(object):
         pass
 
 class DataTransformer(object):
+    def __init__(self, config):
+        self.config = config
+
+    def _strfix(self, val):
+        if val:
+            if isinstance(val, basestring):
+                val = ' '.join(val.split())
+        return val
+    
     def transform(self, row):
-        return row
+        vals = []
+        fields = self.config.settings.transformer.mapping.fields
+        for field in fields:
+            val = row.get(field.source) or row.get(field.source.lower())
+            vals.append((field.name, self._strfix(val)))
+                           
+        return vals
 
 class DataLoader(object):     
     def load(self, datalist):
