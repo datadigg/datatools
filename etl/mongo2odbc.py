@@ -11,7 +11,7 @@ def main():
         
         config = Configuration(parser.parse_args())
         extractor = etl_mongo.MongoDataExtractor(config)
-        transformer = etl_odbc.ODBCDataTransformer(config)
+        transformer = etl.DataTransformer(config)
         loader = etl_odbc.ODBCDataLoader(config)
         etl.etl(config, extractor, transformer, loader)
         
