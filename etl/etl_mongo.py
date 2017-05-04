@@ -2,6 +2,7 @@
 import os, logging, datetime
 from pymongo import MongoClient
 from etl import DataExtractor,DataLoader,DataTransformer
+from bson.son import SON
 
 class MongoDataExtractor(DataExtractor):
     def __init__(self, config):
@@ -28,8 +29,8 @@ class MongoDataExtractor(DataExtractor):
     
     def close(self):
         self.client.close()
-
-class MongoDataTransformer(DataTransformer):
+    
+class MongoUpdateDataTransformer(DataTransformer):
     def __init__(self, config):
         self.config = config
 
@@ -43,23 +44,26 @@ class MongoDataTransformer(DataTransformer):
         query = {}
         update = {}
         for field in fields:
-            val = row.get(field.source)
-            indexed = getattr(field, "indexed", False)
-            clean = getattr(field, "clean", False)
-            isdigit = getattr(field, "isdigit", False)
+            val = row.get(field.source) or row.get(field.source.lower())
             if val:
                 if isinstance(val, list):
                     val = ' '.join(val)
+                    
+                isdigit = getattr(field, "isdigit", False)
                 if isdigit:
                     val = self._clean_digit(val)
+                    
+                indexed = getattr(field, "indexed", False)
                 if indexed:
                     query = { field.name : val }    
                 ops = update.get(field.op)
+                
                 if ops:
                     ops.update({ field.name : val })
                 else:
                     update[field.op] = { field.name : val }
                     
+                clean = getattr(field, "clean", False)
                 if clean:
                     update.get(field.op).update(\
                         { '__' + field.name : self._clean_str(val) })
@@ -87,6 +91,38 @@ class MongoDataLoader(DataLoader):
         logging.debug('host:%s, port:%s' % (mongodb.host, mongodb.port))
 
         self.client = MongoClient(mongodb.host, mongodb.port)
+        self.collection = self._get_collection(mongodb)
+
+    def _get_collection(self, conf):
+        logging.debug('db:%s' % conf.db)
+        logging.debug('collection:%s' % conf.collection)
+        db = self.client[conf.db]
+        if hasattr(conf, 'username') and conf.username:
+            db.authenticate(conf.username, conf.password)
+        collection = db[conf.collection]
+        if conf.indexKey:
+            collection.ensure_index(conf.indexKey, unique=True)
+        return collection
+
+    def load(self, datacol):
+        docs = []
+        for data in datacol:
+            doc = SON([(name,val) for name,val in data
+                       if val is not None])
+            docs.append(doc)
+        self.collection.insert_many(docs)
+
+    def close(self):
+        self.client.close()
+
+class MongoUpdateDataLoader(MongoDataLoader):
+    def __init__(self, config):
+        mongodb = config.settings.loader.mongodb
+        logging.debug('*' * 30)
+        logging.debug('MongoUpdateDataLoader init:')
+        logging.debug('host:%s, port:%s' % (mongodb.host, mongodb.port))
+
+        self.client = MongoClient(mongodb.host, mongodb.port)
         if hasattr(mongodb, 'dbs'):
             self.collections = {}
             for conf in mongodb.dbs:
@@ -96,16 +132,6 @@ class MongoDataLoader(DataLoader):
                 self.collections[conf.tag] = collection
         else:
             self.collection = self._get_collection(mongodb)
-
-    def _get_collection(self, conf):
-        logging.debug('db:%s' % conf.db)
-        logging.debug('collection:%s' % conf.collection)
-        db = self.client[conf.db]
-        if hasattr(conf, 'username') and conf.username:
-            db.authenticate(conf.username, conf.password)
-        collection = db[conf.collection]
-        collection.ensure_index(conf.indexKey, unique=True)
-        return collection
                 
     def load(self, datacol):
         for data in datacol:
@@ -115,8 +141,6 @@ class MongoDataLoader(DataLoader):
             else:
                 query, update = data
                 self.collection.update(query, update, upsert=True)
-
+        
     def close(self):
         self.client.close()
-        
-        

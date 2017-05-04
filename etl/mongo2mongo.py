@@ -8,11 +8,18 @@ def main():
         parser.add_argument('--conf', required=True)
         parser.add_argument('--profile', required=True)
         parser.add_argument('--query', required=True)
-        
-        config = Configuration(parser.parse_args())
+        parser.add_argument('--update', action='store_true', default=False)
+
+        args = parser.parse_args()
+        config = Configuration(args)
         extractor = etl_mongo.MongoDataExtractor(config)
-        transformer = etl_mongo.MongoDataTransformer(config)
-        loader = etl_mongo.MongoDataLoader(config)
+        if args.update:
+                transformer = etl_mongo.MongoUpdateDataTransformer(config)
+                loader = etl_mongo.MongoUpdateDataLoader(config)
+        else:
+                transformer = etl.DataTransformer(config)
+                loader = etl_mongo.MongoDataLoader(config)
+                
         etl.etl(config, extractor, transformer, loader)
         
 if __name__ == '__main__':
