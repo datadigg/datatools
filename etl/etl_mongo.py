@@ -18,7 +18,8 @@ class MongoDataExtractor(DataExtractor):
         self.client = MongoClient(mongodb.host, mongodb.port)
         self.db = self.client[mongodb.db]
         if mongodb.username:
-            self.db.authenticate(mongodb.username, mongodb.password)
+            self.db.authenticate(mongodb.username, mongodb.password, \
+                                 source=mongodb.authenticationDatabase)
         self.collection = self.db[mongodb.collection]
 
     def getrows(self, top=0):
@@ -98,7 +99,8 @@ class MongoDataLoader(DataLoader):
         logging.debug('collection:%s' % conf.collection)
         db = self.client[conf.db]
         if hasattr(conf, 'username') and conf.username:
-            db.authenticate(conf.username, conf.password)
+            db.authenticate(conf.username, conf.password, \
+                            source=conf.authenticationDatabase)
         collection = db[conf.collection]
         if conf.indexKey:
             collection.ensure_index(conf.indexKey, unique=True)
