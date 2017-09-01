@@ -17,7 +17,7 @@ def main():
                 transformer = etl_mongo.MongoUpdateDataTransformer(config)
                 loader = etl_mongo.MongoUpdateDataLoader(config)
         else:
-                transformer = etl.DataTransformer(config)
+                transformer = etl.SimpleDataTransformer(config)
                 loader = etl_mongo.MongoDataLoader(config)
                 
         etl.etl(config, extractor, transformer, loader)
