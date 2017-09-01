@@ -9,6 +9,10 @@ class DataExtractor(object):
         pass
 
 class DataTransformer(object):
+    def transform(self, row):
+        return row
+
+class SimpleDataTransformer(DataTransformer):
     def __init__(self, config):
         self.config = config
 
@@ -28,7 +32,7 @@ class DataTransformer(object):
         return vals
 
 class DataLoader(object):     
-    def load(self, datalist):
+    def load(self, datacol):
         pass
 
 def etl(config, extractor, transformer, loader):
