@@ -26,12 +26,21 @@ class SimpleDataTransformer(DataTransformer):
         vals = []
         fields = self.config.settings.transformer.mapping.fields
         for field in fields:
-            val = row.get(field.source) or row.get(field.source.lower())
+            val = self.getval(row, field)
             vals.append((field.name, self._strfix(val)))
                            
         return vals
 
-class DataLoader(object):     
+    def getval(self, row, field):
+        val = None
+        if field.source:
+            val = row.get(field.source) or row.get(field.source.lower())
+        if not val and hasattr(field, 'default'):
+            val = field.default
+        return val
+            
+
+class DataLoader(object):
     def load(self, datacol):
         pass
 
