@@ -36,6 +36,9 @@ class ElasticsearchDataTransformer(SimpleDataTransformer):
         field_type = getattr(field, 'type', False)
         if field_type == 'str':
             val = val and str(val) or val
+        elif field_type == 'date_str':
+            fmt = getattr(field, 'format', False)
+            val = val and val.strftime(fmt) or val
         
         return val
             
