@@ -45,29 +45,32 @@ class MongoUpdateDataTransformer(DataTransformer):
         query = {}
         update = {}
         for field in fields:
-            val = row.get(field.source) or row.get(field.source.lower())
+            source = self.get_attr(field, 'source')
+            val = row.get(source) or row.get(source.lower())
             if val:
                 if isinstance(val, list):
                     val = ' '.join(val)
                     
-                isdigit = getattr(field, "isdigit", False)
+                isdigit = self.get_attr(field, "isdigit")
                 if isdigit:
                     val = self._clean_digit(val)
                     
-                indexed = getattr(field, "indexed", False)
+                indexed = self.get_attr(field, "indexed")
+                name = self.get_attr(field, 'name')
                 if indexed:
-                    query = { field.name : val }    
-                ops = update.get(field.op)
+                    query = { name : val }
+                op = self.get_attr(field, 'op')
+                ops = update.get(op)
                 
                 if ops:
-                    ops.update({ field.name : val })
+                    ops.update({ name : val })
                 else:
-                    update[field.op] = { field.name : val }
+                    update[op] = { name : val }
                     
-                clean = getattr(field, "clean", False)
+                clean = self.get_attr(field, "clean")
                 if clean:
-                    update.get(field.op).update(\
-                        { '__' + field.name : self._clean_str(val) })
+                    update.get(op).update(\
+                        { '__' + name : self._clean_str(val) })
                            
         if query:
             return query,update
@@ -77,9 +80,11 @@ class MongoUpdateDataTransformer(DataTransformer):
         if isinstance(mapping, list):
             data = {}
             for conf in mapping:
-                result = self._transform(conf.fields, row)
+                fields = self.get_attr(conf, 'fields')
+                result = self._transform(fields, row)
                 if result:
-                    data[conf.tag] = result
+                    tag = self.get_attr(conf, 'tag')
+                    data[tag] = result
         else:
             data = self._transform(mapping.fields, row)
         return data
@@ -95,15 +100,20 @@ class MongoDataLoader(DataLoader):
         self.collection = self._get_collection(mongodb)
 
     def _get_collection(self, conf):
-        logging.debug('db:%s' % conf.db)
-        logging.debug('collection:%s' % conf.collection)
-        db = self.client[conf.db]
-        if hasattr(conf, 'username') and conf.username:
-            db.authenticate(conf.username, conf.password, \
-                            source=conf.authenticationDatabase)
-        collection = db[conf.collection]
-        if conf.indexKey:
-            collection.ensure_index(conf.indexKey, unique=True)
+        db = self.get_attr(conf, 'db')
+        collection = self.get_attr(conf, 'collection')
+        logging.debug('db:%s' % db)
+        logging.debug('collection:%s' % collection)
+        db = self.client[db]
+        username = self.get_attr(conf, 'username')
+        if username:
+            password = self.get_attr(conf, 'password')
+            authsource = self.get_attr(conf, 'authenticationDatabase')
+            db.authenticate(username, password, source=authsource)
+        collection = db[collection]
+        index_key = self.get_attr(conf, 'indexKey')
+        if index_key:
+            collection.ensure_index(index_key, unique=True)
         return collection
 
     def load(self, datacol):
@@ -128,10 +138,11 @@ class MongoUpdateDataLoader(MongoDataLoader):
         if hasattr(mongodb, 'dbs'):
             self.collections = {}
             for conf in mongodb.dbs:
+                tag = self.get_attr(conf, 'tag')
                 logging.debug('-' * 30)
-                logging.debug('tag:%s' % conf.tag)
+                logging.debug('tag:%s' % tag)
                 collection = self._get_collection(conf)
-                self.collections[conf.tag] = collection
+                self.collections[tag] = collection
         else:
             self.collection = self._get_collection(mongodb)
                 

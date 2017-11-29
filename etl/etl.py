@@ -1,14 +1,20 @@
 # -*- coding: utf-8 -*-
 import os, sys, time, logging
 
-class DataExtractor(object):
+class CommonBase(object):
+    
+    def get_attr(self, obj, name):
+        return obj.get(name) \
+               if isinstance(obj, dict) else getattr(obj, name, None)
+
+class DataExtractor(CommonBase):
     def getrows(self, top=0):
         pass
 
     def close(self):
         pass
 
-class DataTransformer(object):
+class DataTransformer(CommonBase):
     def transform(self, row):
         return row
 
@@ -21,26 +27,28 @@ class SimpleDataTransformer(DataTransformer):
             if isinstance(val, basestring):
                 val = ' '.join(val.split())
         return val
+
+    def get_val(self, row, field):
+        val = None
+        source = self.get_attr(field, 'source')
+        if source:
+            val = row.get(source) or row.get(source.lower())
+        if not val:
+            val = self.get_attr(field, 'default')
+        return val
     
     def transform(self, row):
         vals = []
         fields = self.config.settings.transformer.mapping.fields
         for field in fields:
-            val = self.getval(row, field)
-            vals.append((field.name, self._strfix(val)))
+            val = self.get_val(row, field)
+            name = self.get_attr(field, 'name')
+            vals.append((name, self._strfix(val)))
                            
         return vals
-
-    def getval(self, row, field):
-        val = None
-        if field.source:
-            val = row.get(field.source) or row.get(field.source.lower())
-        if not val and hasattr(field, 'default'):
-            val = field.default
-        return val
             
 
-class DataLoader(object):
+class DataLoader(CommonBase):
     def load(self, datacol):
         pass
 
