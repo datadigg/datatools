@@ -9,6 +9,7 @@ def main():
         parser.add_argument('--profile', required=True)
         parser.add_argument('--query', required=True)
         parser.add_argument('--template-name', required=False)
+        parser.add_argument('--settings', required=False, default='{}')
         
         config = Configuration(parser.parse_args())
         extractor = etl_mongo.MongoDataExtractor(config)
