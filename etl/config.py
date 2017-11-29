@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os, yaml
+import os, yaml, json
 import logging, logging.config
 
 from yconf.util import NestedDict
@@ -13,6 +13,8 @@ class Configuration(object):
     def __init__(self, args):
         self.args = args
         self.settings = self._getconfig(args, 'settings.yml')
+        d = json.loads(args.settings)
+        self.settings.update(d)
 
     def _getconfig(self, args, fn):
         filepath = os.path.join(args.conf,fn)

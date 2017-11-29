@@ -9,6 +9,7 @@ def main():
         parser.add_argument('--profile', required=False)
         parser.add_argument('--dbfile', required=False)
         parser.add_argument('--update', action='store_true', default=False)
+        parser.add_argument('--settings', required=False, default='{}')
 
         args = parser.parse_args()
         config = Configuration(parser.parse_args())
