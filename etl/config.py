@@ -2,22 +2,12 @@
 import os, yaml
 import logging, logging.config
 
+from yconf.util import NestedDict
+
 BASE_DIR = os.path.dirname(__file__)
 
 loggingfilepath = os.path.join(BASE_DIR,'logging.yml')
 logging.config.dictConfig(yaml.load(open(loggingfilepath,'r')))
-
-class ConfigObjectWrapper(object):
-    def __init__(self, data):
-        for name, value in data.iteritems():
-            setattr(self, name, self._wrap(value))
-
-    def _wrap(self, value):
-        if isinstance(value, (tuple, list, set, frozenset)): 
-            return type(value)([self._wrap(v) for v in value])
-        else:
-            return ConfigObjectWrapper(value) \
-                   if isinstance(value, dict) else value
         
 class Configuration(object):
     def __init__(self, args):
@@ -33,4 +23,4 @@ class Configuration(object):
             doc = next(doc for doc in docs \
                   if doc.get('profile') == profile)
             
-            return ConfigObjectWrapper(doc)
+            return NestedDict(doc)

@@ -31,13 +31,13 @@ class ElasticsearchDataTransformer(SimpleDataTransformer):
     def __init__(self, config):
         super(ElasticsearchDataTransformer, self).__init__(config)
     
-    def getval(self, row, field):
-        val = super(ElasticsearchDataTransformer, self).getval(row, field)
-        field_type = getattr(field, 'type', False)
+    def get_val(self, row, field):
+        val = super(ElasticsearchDataTransformer, self).get_val(row, field)
+        field_type = self.get_attr(field, 'type')
         if field_type == 'str':
             val = val and str(val) or val
         elif field_type == 'date_str':
-            fmt = getattr(field, 'format', False)
+            fmt = self.get_attr(field, 'format')
             val = val and val.strftime(fmt) or val
         
         return val

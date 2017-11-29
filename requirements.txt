@@ -1,0 +1,4 @@
+PyYAML
+yconf
+pymongo
+elasticsearch-dsl
