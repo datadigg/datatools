@@ -17,12 +17,13 @@ class Configuration(object):
         self.settings.update(d)
 
     def _getconfig(self, args, fn):
+        d = {}
         filepath = os.path.join(args.conf,fn)
         if os.path.exists(filepath):
             logging.debug('loading:%s' % filepath)
             docs = yaml.load_all(open(filepath,'r'))
             profile = args.profile or 'default'
-            doc = next(doc for doc in docs \
+            d = next(doc for doc in docs \
                   if doc.get('profile') == profile)
             
-            return NestedDict(doc)
+        return NestedDict(d)
