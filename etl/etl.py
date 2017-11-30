@@ -2,6 +2,10 @@
 import os, sys, time, logging
 
 class CommonBase(object):
+
+    def check_attr(self, obj, name):
+        return name in obj \
+               if isinstance(obj, dict) else hasattr(obj, name)
     
     def get_attr(self, obj, name):
         return obj.get(name) \
@@ -33,7 +37,7 @@ class SimpleDataTransformer(DataTransformer):
         source = self.get_attr(field, 'source')
         if source:
             val = row.get(source) or row.get(source.lower())
-        if not val:
+        if not val and self.check_attr(field, 'default'):
             val = self.get_attr(field, 'default')
         return val
     
