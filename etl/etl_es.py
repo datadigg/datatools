@@ -57,7 +57,6 @@ class ElasticsearchDataLoader(DataLoader):
         self.client = Elasticsearch(es.hosts)
         self._initIndexTemplate()
 
-
     def _initIndexTemplate(self):
         if hasattr(self.config.args, 'template_name'):
             template_name = self.config.args.template_name
@@ -68,18 +67,20 @@ class ElasticsearchDataLoader(DataLoader):
                     self.client.indices.put_template(name = template_name,
                                                      body = template_body)
                 
-
-    def load(self, datacol):
-        actions = []
+    def generate_actions(self, datacol):
         for data in datacol:
             action = {
                 '_index' : self.es.index.format(**dict(data)),
                 '_type' : self.es.doc_type
             }
             action.update(data)
-            actions.append(action)
-        
-        helpers.bulk(self.client, actions)
+            yield action
+            
+    def load(self, datacol):
+        for success, info in helpers.parallel_bulk(self.client,
+                              self.generate_actions(datacol)):
+            if not success:
+                logging.debug('doc failed: %s' % info)
 
     def close(self):
         pass
