@@ -56,21 +56,37 @@ class ElasticsearchDataLoader(DataLoader):
         self.es = es
         self.client = Elasticsearch(es.hosts)
         self._initIndexTemplate()
+        
+        self.current_indices = []
 
     def _initIndexTemplate(self):
+        logging.debug('init index template:')
         if hasattr(self.config.args, 'template_name'):
             template_name = self.config.args.template_name
             if template_name:
                 fn = template_name + '-' + self.config.args.profile + '.json'
+                logging.debug('template file: %s' % fn)
                 with open(os.path.join(self.config.args.conf, fn)) as json_data:
                     template_body = json.load(json_data)
                     self.client.indices.put_template(name = template_name,
                                                      body = template_body)
+
+    def _prepare_settings(self, index):
+        if not index in self.current_indices:
+            self.current_indices.append(index)
+            if self.es.settings:
+                if not self.client.indices.exists(index):
+                    self.client.indices.create(index)
                 
-    def generate_actions(self, datacol):
+                self.client.indices.put_settings(
+                        index=index, body=self.es.settings)
+        
+    def _generate_actions(self, datacol):
         for data in datacol:
+            index = self.es.index.format(**dict(data))
+            self._prepare_settings(index)
             action = {
-                '_index' : self.es.index.format(**dict(data)),
+                '_index' : index,
                 '_type' : self.es.doc_type
             }
             action.update(data)
@@ -78,10 +94,14 @@ class ElasticsearchDataLoader(DataLoader):
             
     def load(self, datacol):
         for success, info in helpers.parallel_bulk(self.client,
-                              self.generate_actions(datacol)):
+                              self._generate_actions(datacol)):
             if not success:
-                logging.debug('doc failed: %s' % info)
+                raise Exception('doc failed: %s' % info)
 
-    def close(self):
-        pass
+    def optimize(self):
+        if self.current_indices:
+            index = ','.join(self.current_indices)
+            logging.debug('optimize index: %s' % index)
+            self.client.indices.forcemerge(index=index,
+                max_num_segments=1, ignore_unavailable=True)
         
