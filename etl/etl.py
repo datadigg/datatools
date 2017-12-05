@@ -56,6 +56,12 @@ class DataLoader(CommonBase):
     def load(self, datacol):
         pass
 
+    def optimize(self):
+        pass
+
+    def close(self):
+        pass
+
 def etl(config, extractor, transformer, loader):
     try:
         start_time = time.time()
@@ -77,6 +83,8 @@ def etl(config, extractor, transformer, loader):
         elapsed_time = time.time() - start_time
         logging.debug('insert total:%d, execution time:%.3f' \
               % (total, elapsed_time))
+        
+        loader.optimize()
     except Exception as e:
         logging.exception(hasattr(e,'value') and e.value[1] or e)
         raise e
