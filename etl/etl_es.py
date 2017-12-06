@@ -54,7 +54,10 @@ class ElasticsearchDataLoader(DataLoader):
 
         self.config = config
         self.es = es
-        self.client = Elasticsearch(es.hosts)
+        self.client = Elasticsearch(
+            es.hosts, timeout=100, max_retries=3,
+            retry_on_timeout=True)
+        
         self._initIndexTemplate()
         
         self.current_indices = []
