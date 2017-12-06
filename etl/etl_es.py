@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os, logging, datetime, json
 from elasticsearch import Elasticsearch, helpers
+from urllib3.exceptions import ReadTimeoutError
 from etl import DataExtractor,DataLoader,SimpleDataTransformer
 
 class ElasticsearchDataExtractor(DataExtractor):
@@ -105,6 +106,9 @@ class ElasticsearchDataLoader(DataLoader):
         if self.current_indices:
             index = ','.join(self.current_indices)
             logging.debug('optimize index: %s' % index)
-            self.client.indices.forcemerge(index=index,
-                max_num_segments=1, ignore_unavailable=True)
+            try:
+                self.client.indices.forcemerge(index=index,
+                    max_num_segments=1, ignore_unavailable=True)
+            except ReadTimeoutError as e:
+                pass
         
