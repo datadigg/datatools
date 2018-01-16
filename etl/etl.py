@@ -65,24 +65,33 @@ class DataLoader(CommonBase):
 def etl(config, extractor, transformer, loader):
     try:
         start_time = time.time()
-        total = 0
-        datacol = []
-        for row in extractor.getrows():
-            data = transformer.transform(row)
-    
-            total += 1
-            sys.stdout.write('processed:%s\r' % total)
-            if data:
-                datacol.append(data)
-            if len(datacol) == config.settings.loader.autoCommitSize:
+        total = [0]
+        commit_size = config.settings.loader.autoCommitSize
+        if commit_size > 0:
+            datacol = []
+            for row in extractor.getrows():
+                total[0] += 1
+                sys.stdout.write('processed:%s\r' % total[0])
+                data = transformer.transform(row)
+                if data:
+                    datacol.append(data)
+                if len(datacol) == commit_size:
+                    loader.load(datacol)
+                    datacol[:] = []
+            if datacol:
                 loader.load(datacol)
-                datacol[:] = []
-    
-        if datacol:
-            loader.load(datacol)
+        else:
+            def generate_data(extractor, transformer):
+                for row in extractor.getrows():
+                    total[0] += 1
+                    sys.stdout.write('processed:%s\r' % total[0])
+                    yield transformer.transform(row)
+                    
+            loader.load(generate_data(extractor, transformer))
+                   
         elapsed_time = time.time() - start_time
         logging.debug('insert total:%d, execution time:%.3f' \
-              % (total, elapsed_time))
+              % (total[0], elapsed_time))
         
         loader.optimize()
     except Exception as e:
