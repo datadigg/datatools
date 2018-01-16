@@ -78,10 +78,11 @@ class ElasticsearchDataLoader(DataLoader):
     def _prepare_settings(self, index):
         if not index in self.current_indices:
             self.current_indices.append(index)
-            if self.es.settings:
-                if not self.client.indices.exists(index):
+            
+            if not self.client.indices.exists(index):
                     self.client.indices.create(index)
-                
+                    
+            if 'settings' in self.es:
                 self.client.indices.put_settings(
                         index=index, body=self.es.settings)
         
@@ -97,8 +98,13 @@ class ElasticsearchDataLoader(DataLoader):
             yield action
             
     def load(self, datacol):
+        bulk_args = {}
+        if 'client' in self.es and 'bulk' in self.es.client:
+            bulk_args.update(self.es.client.bulk.kwargs)
+            logging.debug('client bulk args: %s' % bulk_args)
+            
         for success, info in helpers.parallel_bulk(self.client,
-                              self._generate_actions(datacol)):
+                              self._generate_actions(datacol), **bulk_args):
             if not success:
                 raise Exception('doc failed: %s' % info)
 
@@ -107,8 +113,15 @@ class ElasticsearchDataLoader(DataLoader):
             index = ','.join(self.current_indices)
             logging.debug('optimize index: %s' % index)
             try:
-                self.client.indices.forcemerge(index=index,
-                    max_num_segments=1, ignore_unavailable=True)
+                merge_args = {
+                    'max_num_segments': 1,
+                    'ignore_unavailable': True
+                }
+                if 'client' in self.es and 'merge' in self.es.client:
+                    merge_args.update(self.es.client.merge.kwargs)
+                    logging.debug('client merge args: %s' % merge_args)
+                    
+                self.client.indices.forcemerge(index=index, **merge_args)
             except ConnectionTimeout as e:
                 pass
         
