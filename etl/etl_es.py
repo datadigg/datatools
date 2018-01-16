@@ -53,24 +53,34 @@ class ElasticsearchDataLoader(DataLoader):
         logging.debug('index:%s' % es.index)
         logging.debug('doc_type:%s' % es.doc_type)
 
-        self.config = config
         self.es = es
-        self.client = Elasticsearch(
-            es.hosts, timeout=100, max_retries=3,
-            retry_on_timeout=True)
-        
-        self._initIndexTemplate()
+        self._init_client(es)
+        self._init_index_template(config)
         
         self.current_indices = []
 
-    def _initIndexTemplate(self):
+    def _client_args(self, name, kwargs):
+        if 'client' in self.es and name in self.es.client:
+            kwargs.update(self.es.client[name]['kwargs'])
+        return kwargs
+    
+    def _init_client(self, es):
+        conn_args = self._client_args('connect', {
+            'timeout': 100,
+            'max_retries': 3,
+            'retry_on_timeout': True
+            })
+        logging.debug('client connect args: %s' % conn_args)
+        self.client = Elasticsearch(es.hosts, **conn_args)
+
+    def _init_index_template(self, config):
         logging.debug('init index template:')
-        if hasattr(self.config.args, 'template_name'):
-            template_name = self.config.args.template_name
+        if hasattr(config.args, 'template_name'):
+            template_name = config.args.template_name
             if template_name:
-                fn = template_name + '-' + self.config.args.profile + '.json'
+                fn = template_name + '-' + config.args.profile + '.json'
                 logging.debug('template file: %s' % fn)
-                with open(os.path.join(self.config.args.conf, fn)) as json_data:
+                with open(os.path.join(config.args.conf, fn)) as json_data:
                     template_body = json.load(json_data)
                     self.client.indices.put_template(name = template_name,
                                                      body = template_body)
@@ -98,9 +108,8 @@ class ElasticsearchDataLoader(DataLoader):
             yield action
             
     def load(self, datacol):
-        bulk_args = {}
-        if 'client' in self.es and 'bulk' in self.es.client:
-            bulk_args.update(self.es.client.bulk.kwargs)
+        bulk_args = self._client_args('bulk', {})
+        if bulk_args:
             logging.debug('client bulk args: %s' % bulk_args)
             
         for success, info in helpers.parallel_bulk(self.client,
@@ -112,15 +121,12 @@ class ElasticsearchDataLoader(DataLoader):
         if self.current_indices:
             index = ','.join(self.current_indices)
             logging.debug('optimize index: %s' % index)
-            try:
-                merge_args = {
-                    'max_num_segments': 1,
-                    'ignore_unavailable': True
-                }
-                if 'client' in self.es and 'merge' in self.es.client:
-                    merge_args.update(self.es.client.merge.kwargs)
-                    logging.debug('client merge args: %s' % merge_args)
-                    
+            merge_args = self._client_args('merge', {
+                'max_num_segments': 1,
+                'ignore_unavailable': True
+                })
+            logging.debug('client merge args: %s' % merge_args)
+            try:   
                 self.client.indices.forcemerge(index=index, **merge_args)
             except ConnectionTimeout as e:
                 pass
