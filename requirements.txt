@@ -1,4 +1,3 @@
-PyYAML
-yconf
-pymongo
-elasticsearch-dsl
+yconf>=0.3
+pymongo>=2.4
+elasticsearch-dsl>=2.0.0
