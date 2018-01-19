@@ -13,7 +13,7 @@ def main():
         
         config = Configuration(parser.parse_args())
         extractor = etl_mongo.MongoDataExtractor(config)
-        transformer = etl_es.ElasticsearchDataTransformer(config)
+        transformer = etl.SimpleDataTransformer(config)
         loader = etl_es.ElasticsearchDataLoader(config)
         etl.etl(config, extractor, transformer, loader)
         

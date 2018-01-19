@@ -2,7 +2,7 @@
 import os, logging, datetime, json
 from elasticsearch import Elasticsearch, helpers
 from elasticsearch.exceptions import ConnectionTimeout
-from etl import DataExtractor,DataLoader,SimpleDataTransformer
+from etl import DataExtractor,DataLoader
 
 class ElasticsearchDataExtractor(DataExtractor):
     def __init__(self, config):
@@ -27,21 +27,6 @@ class ElasticsearchDataExtractor(DataExtractor):
 
     def close(self):
         pass
-
-class ElasticsearchDataTransformer(SimpleDataTransformer):
-    def __init__(self, config):
-        super(ElasticsearchDataTransformer, self).__init__(config)
-    
-    def get_val(self, row, field):
-        val = super(ElasticsearchDataTransformer, self).get_val(row, field)
-        field_type = self.get_attr(field, 'type')
-        if field_type == 'str':
-            val = val and str(val) or val
-        elif field_type == 'date_str':
-            fmt = self.get_attr(field, 'format')
-            val = val and val.strftime(fmt) or val
-        
-        return val
             
 
 class ElasticsearchDataLoader(DataLoader):
