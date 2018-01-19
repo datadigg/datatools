@@ -39,6 +39,14 @@ class SimpleDataTransformer(DataTransformer):
             val = row.get(source) or row.get(source.lower())
         if not val and self.check_attr(field, 'default'):
             val = self.get_attr(field, 'default')
+
+        field_type = self.get_attr(field, 'type')
+        if field_type == 'str':
+            val = val and str(val) or val
+        elif field_type == 'date_str':
+            fmt = self.get_attr(field, 'format')
+            val = val and val.strftime(fmt) or val
+        
         return val
     
     def transform(self, row):
