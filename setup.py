@@ -14,7 +14,7 @@ reqs = [str(ir.req) for ir in install_reqs]
 
 setup(
     # Application name:
-    name="datatools-etl",
+    name="datatools",
 
     # Version number (initial):
     version="0.1.0",
@@ -24,17 +24,17 @@ setup(
     author_email="cheng.xu@tendata.cn",
 
     # Packages
-    packages=["etl"],
+    packages=["datatools"],
 
     # Include additional files into the package
     include_package_data=True,
 
     # Details
-    url="http://pypi.tendata.cn/pypi/datatools-etl_v010",
+    url="http://pypi.tendata.cn/pypi/datatools_v010",
 
     #
     # license="LICENSE.txt",
-    description="ETL Data Tools",
+    description="Data Tools",
 
     long_description=open("README.md").read(),
 

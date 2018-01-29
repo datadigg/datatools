@@ -1,13 +1,8 @@
 # -*- coding: utf-8 -*-
 import os, yaml, json
-import logging, logging.config
+import logging
 
 from yconf.util import NestedDict
-
-BASE_DIR = os.path.dirname(__file__)
-
-loggingfilepath = os.path.join(BASE_DIR,'logging.yml')
-logging.config.dictConfig(yaml.load(open(loggingfilepath,'r')))
         
 class Configuration(object):
     def __init__(self, args):

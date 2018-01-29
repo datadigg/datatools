@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys, argparse
-import etl, etl_mongo, etl_odbc
-from config import Configuration
+
+from datatools.etl import etl, etl_mongo, etl_odbc
+from datatools.etl.config import Configuration
 
 def main():
         parser = argparse.ArgumentParser(description='ETL(odbc to mongo)')
@@ -10,6 +11,9 @@ def main():
         parser.add_argument('--dbfile', required=False)
         parser.add_argument('--update', action='store_true', default=False)
         parser.add_argument('--settings', required=False, default='{}')
+
+        from settings import configure_logging
+        configure_logging()
 
         args = parser.parse_args()
         config = Configuration(parser.parse_args())
