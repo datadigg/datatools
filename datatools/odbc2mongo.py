@@ -15,8 +15,7 @@ def main():
         from settings import configure_logging
         configure_logging()
 
-        args = parser.parse_args()
-        config = Configuration(parser.parse_args())
+        config = Configuration(vars(parser.parse_args()))
         extractor = etl_odbc.ODBCDataExtractor(config)
         if args.update:
                 transformer = etl_mongo.MongoUpdateDataTransformer(config)

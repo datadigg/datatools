@@ -5,10 +5,10 @@ import logging
 from yconf.util import NestedDict
         
 class Configuration(object):
-    def __init__(self, args):
-        self.args = args
-        self.settings = self._getconfig(args, 'settings.yml')
-        d = json.loads(args.settings)
+    def __init__(self, d):
+        self.args = NestedDict(d)
+        self.settings = self._getconfig(self.args, 'settings.yml')
+        d = json.loads(self.args.settings)
         self.settings.update(d)
 
     def _getconfig(self, args, fn):
