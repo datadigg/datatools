@@ -1,5 +1,5 @@
 import uuid
-from setuptools import setup
+from setuptools import setup, find_packages
 import os
 from pip.req import parse_requirements
 
@@ -24,7 +24,7 @@ setup(
     author_email="cheng.xu@tendata.cn",
 
     # Packages
-    packages=["datatools"],
+    packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
 
     # Include additional files into the package
     include_package_data=True,
