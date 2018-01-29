@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys, argparse
-import etl, etl_mongo, etl_es
-from config import Configuration
+
+from etl import etl, etl_mongo, etl_es
+from etl.config import Configuration
 
 def main():
         parser = argparse.ArgumentParser(description='ETL(mongo to es)')
@@ -10,6 +11,9 @@ def main():
         parser.add_argument('--query', required=True)
         parser.add_argument('--template-name', required=False)
         parser.add_argument('--settings', required=False, default='{}')
+
+        from settings import configure_logging
+        configure_logging()
         
         config = Configuration(parser.parse_args())
         extractor = etl_mongo.MongoDataExtractor(config)
