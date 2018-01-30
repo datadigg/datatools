@@ -70,7 +70,10 @@ class DataLoader(CommonBase):
     def close(self):
         pass
 
-def etl(config, extractor, transformer, loader):
+def console_callback(i):
+    sys.stdout.write('processed:%d\r' % i)
+        
+def etl(config, extractor, transformer, loader, callback=console_callback):
     try:
         start_time = time.time()
         total = [0]
@@ -79,7 +82,7 @@ def etl(config, extractor, transformer, loader):
             datacol = []
             for row in extractor.getrows():
                 total[0] += 1
-                sys.stdout.write('processed:%s\r' % total[0])
+                callback(total[0])
                 data = transformer.transform(row)
                 if data:
                     datacol.append(data)
@@ -92,7 +95,7 @@ def etl(config, extractor, transformer, loader):
             def generate_data(extractor, transformer):
                 for row in extractor.getrows():
                     total[0] += 1
-                    sys.stdout.write('processed:%s\r' % total[0])
+                    callback(total[0])
                     yield transformer.transform(row)
                     
             loader.load(generate_data(extractor, transformer))
@@ -101,6 +104,7 @@ def etl(config, extractor, transformer, loader):
         logging.debug('insert total:%d, execution time:%.3f' \
               % (total[0], elapsed_time))
         
+        # optional optimize
         loader.optimize()
     except Exception as e:
         logging.exception(hasattr(e,'value') and e.value[1] or e)
