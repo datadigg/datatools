@@ -82,7 +82,8 @@ def etl(config, extractor, transformer, loader, callback=console_callback):
             datacol = []
             for row in extractor.getrows():
                 total[0] += 1
-                callback(total[0])
+                if callback:
+                    callback(total[0])
                 data = transformer.transform(row)
                 if data:
                     datacol.append(data)
@@ -95,7 +96,8 @@ def etl(config, extractor, transformer, loader, callback=console_callback):
             def generate_data(extractor, transformer):
                 for row in extractor.getrows():
                     total[0] += 1
-                    callback(total[0])
+                    if callback:
+                        callback(total[0])
                     yield transformer.transform(row)
                     
             loader.load(generate_data(extractor, transformer))
