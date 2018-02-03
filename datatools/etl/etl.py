@@ -112,11 +112,11 @@ def etl(config, extractor, transformer, loader, callback=console_callback):
         
         # optional optimize
         loader.optimize()
+
+        return total[0]
     except Exception as e:
         logging.exception(hasattr(e,'value') and e.value[1] or e)
         raise e
     finally:
         if extractor: extractor.close()
         if loader: loader.close()
-
-    return total[0]
