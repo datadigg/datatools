@@ -70,20 +70,24 @@ class DataLoader(CommonBase):
     def close(self):
         pass
 
-def console_callback(i):
-    sys.stdout.write('processed:%d\r' % i)
+def console_callback(start_time, current):
+    elapsed_time = time.time() - start_time
+    sys.stdout.write('processed:%d, elapsed time:%.3f\r'
+                     % (current, elapsed_time))
         
 def etl(config, extractor, transformer, loader, callback=console_callback):
     try:
         start_time = time.time()
         total = [0]
         commit_size = config.settings.loader.autoCommitSize
+        def _callback_data(current):
+            return {'start_time': start_time, 'current': current}
         if commit_size > 0:
             datacol = []
             for row in extractor.getrows():
                 total[0] += 1
                 if callback:
-                    callback(total[0])
+                    callback(**_callback_data(total[0]))
                 data = transformer.transform(row)
                 if data:
                     datacol.append(data)
@@ -97,7 +101,7 @@ def etl(config, extractor, transformer, loader, callback=console_callback):
                 for row in extractor.getrows():
                     total[0] += 1
                     if callback:
-                        callback(total[0])
+                        callback(**_callback_data(total[0]))
                     yield transformer.transform(row)
                     
             loader.load(generate_data(extractor, transformer))
