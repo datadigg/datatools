@@ -114,3 +114,5 @@ def etl(config, extractor, transformer, loader, callback=console_callback):
     finally:
         if extractor: extractor.close()
         if loader: loader.close()
+
+    return total[0]
