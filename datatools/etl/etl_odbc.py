@@ -3,12 +3,14 @@ import os, logging
 import pyodbc, pypyodbc
 from etl import DataExtractor,DataTransformer,DataLoader
 
+logger = logging.getLogger(__name__)
+
 class ODBCDataExtractor(DataExtractor):
     def __init__(self, config):
         odbc = config.settings.extractor.odbc
         connstr = config.args.dbfile \
                   and odbc.connstr % config.args.dbfile or odbc.connstr 
-        logging.debug('ODBCDataExtractor connstr:%s' % connstr)
+        logger.debug('ODBCDataExtractor connstr:%s' % connstr)
         self.conn = pypyodbc.connect(connstr)
         self.cursor = self.conn.cursor()
         if odbc.table:
@@ -16,7 +18,7 @@ class ODBCDataExtractor(DataExtractor):
         else:
             tables = [tb.table_name for tb in self.cursor.tables() \
                       if tb.table_type == 'TABLE']
-            logging.debug('tables:%s' % tables);
+            logger.debug('tables:%s' % tables);
             self.table = tables[0]
 
     def getrows(self, top=0):
@@ -25,10 +27,10 @@ class ODBCDataExtractor(DataExtractor):
             topstr = 'top %s'%top
         sql = '''select %s * from [%s]'''\
                 % (topstr,self.table,)
-        logging.debug('execute sql:[%s]' % sql)
+        logger.debug('execute sql:[%s]' % sql)
         self.cursor.execute(sql)
         cols = [col[0].lower() for col in self.cursor.description]
-        logging.debug('extract columns:%s' % cols)
+        logger.debug('extract columns:%s' % cols)
         for row in self.cursor:
             yield dict(zip(cols,row))
         
@@ -39,9 +41,9 @@ class ODBCDataExtractor(DataExtractor):
 class ODBCDataLoader(DataLoader):
     def __init__(self, config):
         odbc = config.settings.loader.odbc
-        logging.debug('ODBCDataLoader init:')
-        logging.debug('connstr:%s' % odbc.connstr)
-        logging.debug('table:%s' % odbc.table)
+        logger.debug('ODBCDataLoader init:')
+        logger.debug('connstr:%s' % odbc.connstr)
+        logger.debug('table:%s' % odbc.table)
         self.conn = pypyodbc.connect(odbc.connstr)
         self.cursor = self.conn.cursor()
         self.table = odbc.table

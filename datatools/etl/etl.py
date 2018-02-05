@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import os, sys, time, logging
 
+logger = logging.getLogger(__name__)
+
 class CommonBase(object):
 
     def check_attr(self, obj, name):
@@ -107,7 +109,7 @@ def etl(config, extractor, transformer, loader, callback=console_callback):
             loader.load(generate_data(extractor, transformer))
                    
         elapsed_time = time.time() - start_time
-        logging.debug('insert total:%d, execution time:%.3f' \
+        logger.info('insert total:%d, execution time:%.3f' \
               % (total[0], elapsed_time))
         
         # optional optimize
@@ -115,7 +117,7 @@ def etl(config, extractor, transformer, loader, callback=console_callback):
 
         return start_time, total[0]
     except Exception as e:
-        logging.exception(hasattr(e,'value') and e.value[1] or e)
+        logger.exception(hasattr(e,'value') and e.value[1] or e)
         raise e
     finally:
         if extractor: extractor.close()

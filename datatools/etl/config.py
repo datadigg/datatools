@@ -3,7 +3,9 @@ import os, yaml, json
 import logging
 
 from yconf.util import NestedDict
-        
+
+logger = logging.getLogger(__name__)
+
 class Configuration(object):
     def __init__(self, d):
         self.args = NestedDict(d)
@@ -15,7 +17,7 @@ class Configuration(object):
         d = {}
         filepath = os.path.join(args.conf,fn)
         if os.path.exists(filepath):
-            logging.debug('loading:%s' % filepath)
+            logger.debug('loading:%s' % filepath)
             docs = yaml.load_all(open(filepath,'r'))
             profile = args.profile or 'default'
             d = next(doc for doc in docs \
