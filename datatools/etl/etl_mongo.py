@@ -4,14 +4,16 @@ from pymongo import MongoClient
 from etl import DataExtractor,DataLoader,DataTransformer
 from bson.son import SON
 
+logger = logging.getLogger(__name__)
+
 class MongoDataExtractor(DataExtractor):
     def __init__(self, config):
         mongodb = config.settings.extractor.mongodb
-        logging.debug('*' * 30)
-        logging.debug('MongoDataExtractor init:')
-        logging.debug('host:%s, port:%s' % (mongodb.host, mongodb.port))
-        logging.debug('db:%s' % mongodb.db)
-        logging.debug('collection:%s' % mongodb.collection)
+        logger.debug('*' * 30)
+        logger.debug('MongoDataExtractor init:')
+        logger.debug('host:%s, port:%s' % (mongodb.host, mongodb.port))
+        logger.debug('db:%s' % mongodb.db)
+        logger.debug('collection:%s' % mongodb.collection)
         
         self.config = config
         self.mongodb = mongodb
@@ -24,7 +26,7 @@ class MongoDataExtractor(DataExtractor):
 
     def getrows(self, top=0):
         query =  eval(self.config.args.query)
-        logging.debug('execute query:%s' % query)
+        logger.debug('execute query:%s' % query)
         projection = eval(self.mongodb.projection)
         return self.collection.find(query, projection)
     
@@ -92,9 +94,9 @@ class MongoUpdateDataTransformer(DataTransformer):
 class MongoDataLoader(DataLoader):
     def __init__(self, config):
         mongodb = config.settings.loader.mongodb
-        logging.debug('*' * 30)
-        logging.debug('MongoDataLoader init:')
-        logging.debug('host:%s, port:%s' % (mongodb.host, mongodb.port))
+        logger.debug('*' * 30)
+        logger.debug('MongoDataLoader init:')
+        logger.debug('host:%s, port:%s' % (mongodb.host, mongodb.port))
 
         self.client = MongoClient(mongodb.host, mongodb.port)
         self.collection = self._get_collection(mongodb)
@@ -102,8 +104,8 @@ class MongoDataLoader(DataLoader):
     def _get_collection(self, conf):
         db = self.get_attr(conf, 'db')
         collection = self.get_attr(conf, 'collection')
-        logging.debug('db:%s' % db)
-        logging.debug('collection:%s' % collection)
+        logger.debug('db:%s' % db)
+        logger.debug('collection:%s' % collection)
         db = self.client[db]
         username = self.get_attr(conf, 'username')
         if username:
@@ -130,17 +132,17 @@ class MongoDataLoader(DataLoader):
 class MongoUpdateDataLoader(MongoDataLoader):
     def __init__(self, config):
         mongodb = config.settings.loader.mongodb
-        logging.debug('*' * 30)
-        logging.debug('MongoUpdateDataLoader init:')
-        logging.debug('host:%s, port:%s' % (mongodb.host, mongodb.port))
+        logger.debug('*' * 30)
+        logger.debug('MongoUpdateDataLoader init:')
+        logger.debug('host:%s, port:%s' % (mongodb.host, mongodb.port))
 
         self.client = MongoClient(mongodb.host, mongodb.port)
         if hasattr(mongodb, 'dbs'):
             self.collections = {}
             for conf in mongodb.dbs:
                 tag = self.get_attr(conf, 'tag')
-                logging.debug('-' * 30)
-                logging.debug('tag:%s' % tag)
+                logger.debug('-' * 30)
+                logger.debug('tag:%s' % tag)
                 collection = self._get_collection(conf)
                 self.collections[tag] = collection
         else:
