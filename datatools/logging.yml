@@ -2,6 +2,7 @@
  
 # Formatters detailed here: http://docs.python.org/2/library/logging.html#logrecord-attributes
 version: 1
+disable_existing_loggers: false
 formatters:
   simple:
     format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -32,6 +33,12 @@ handlers:
     encoding: utf-8
 
 root:
-  level: DEBUG
+  level: INFO
   handlers: [console, D, E]
   propagate: true
+  
+loggers:
+  etl:
+     level: DEBUG
+     handlers: [console, D, E]
+     propagate: false
