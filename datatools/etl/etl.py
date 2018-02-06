@@ -10,7 +10,7 @@ class CommonBase(object):
                if isinstance(obj, dict) else hasattr(obj, name)
     
     def get_attr(self, obj, name):
-        return obj.get(name) \
+        return obj.get(name, None) \
                if isinstance(obj, dict) else getattr(obj, name, None)
 
 class DataExtractor(CommonBase):
@@ -63,7 +63,7 @@ class SimpleDataTransformer(DataTransformer):
             
 
 class DataLoader(CommonBase):
-    def load(self, datacol):
+    def load(self, datacol, callback=None, **kwargs):
         pass
 
     def optimize(self):
@@ -72,50 +72,31 @@ class DataLoader(CommonBase):
     def close(self):
         pass
 
-def console_callback(start_time, current):
-    elapsed_time = time.time() - start_time
+def console_callback(d):
+    elapsed_time = time.time() - d['start_time']
     sys.stdout.write('processed:%d, elapsed time:%.3f\r'
-                     % (current, elapsed_time))
+                     % (d['current'], elapsed_time))
         
 def etl(config, extractor, transformer, loader, callback=console_callback):
     try:
         start_time = time.time()
-        total = [0]
-        commit_size = config.settings.loader.autoCommitSize
-        def _callback_data(current):
-            return {'start_time': start_time, 'current': current}
-        if commit_size > 0:
-            datacol = []
+        def generate_data(extractor, transformer):
             for row in extractor.getrows():
-                total[0] += 1
-                if callback:
-                    callback(**_callback_data(total[0]))
-                data = transformer.transform(row)
-                if data:
-                    datacol.append(data)
-                if len(datacol) == commit_size:
-                    loader.load(datacol)
-                    datacol[:] = []
-            if datacol:
-                loader.load(datacol)
-        else:
-            def generate_data(extractor, transformer):
-                for row in extractor.getrows():
-                    total[0] += 1
-                    if callback:
-                        callback(**_callback_data(total[0]))
-                    yield transformer.transform(row)
-                    
-            loader.load(generate_data(extractor, transformer))
-                   
+                yield transformer.transform(row)
+
+        if callback:
+            callback.start_time = start_time
+        
+        total = loader.load(generate_data(extractor, transformer),
+                            callback, start_time=start_time)        
         elapsed_time = time.time() - start_time
         logger.info('insert total:%d, execution time:%.3f' \
-              % (total[0], elapsed_time))
+              % (total, elapsed_time))
         
         # optional optimize
         loader.optimize()
 
-        return start_time, total[0]
+        return start_time, total
     except Exception as e:
         logger.exception(hasattr(e,'value') and e.value[1] or e)
         raise e

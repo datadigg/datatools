@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys, argparse
 
-from datatools.etl import etl, etl_mongo, etl_odbc
-from datatools.etl.config import Configuration
+from etl import etl, etl_mongo, etl_odbc
+from etl.config import Configuration
 
 def main():
         parser = argparse.ArgumentParser(description='ETL(mongo to odbc)')

@@ -100,6 +100,8 @@ class MongoDataLoader(DataLoader):
 
         self.client = MongoClient(mongodb.host, mongodb.port)
         self.collection = self._get_collection(mongodb)
+        self.commit_size = self.get_attr(config.settings.loader,
+                                         'autoCommitSize') or 1000
 
     def _get_collection(self, conf):
         db = self.get_attr(conf, 'db')
@@ -118,13 +120,23 @@ class MongoDataLoader(DataLoader):
             collection.ensure_index(index_key, unique=True)
         return collection
 
-    def load(self, datacol):
+    def load(self, datacol, callback=None, **kwargs):
+        total = 0
         docs = []
         for data in datacol:
+            total += 1
+            if callback:
+                callback({'start_time': kwargs['start_time'],
+                          'current': total})
             doc = SON([(name,val) for name,val in data
                        if val is not None])
             docs.append(doc)
-        self.collection.insert_many(docs)
+            if len(docs) == self.commit_size:
+                self.collection.insert_many(docs)
+                docs[:] = []
+        if docs:
+            self.collection.insert_many(docs)
+        return total
 
     def close(self):
         self.client.close()
@@ -148,14 +160,20 @@ class MongoUpdateDataLoader(MongoDataLoader):
         else:
             self.collection = self._get_collection(mongodb)
                 
-    def load(self, datacol):
+    def load(self, datacol, callback=None, **kwargs):
+        total = 0
         for data in datacol:
+            total += 1
+            if callback:
+                callback({'start_time': kwargs['start_time'],
+                          'current': total})
             if isinstance(data, dict):
                 for key, (query, update) in data.iteritems():
                     self.collections[key].update(query, update, upsert=True)
             else:
                 query, update = data
                 self.collection.update(query, update, upsert=True)
-        
+        return total
+    
     def close(self):
         self.client.close()

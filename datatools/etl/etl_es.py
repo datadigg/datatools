@@ -93,16 +93,23 @@ class ElasticsearchDataLoader(DataLoader):
             }
             action.update(data)
             yield action
+    
+    def load(self, datacol, callback=None, **kwargs):
+        if not hasattr(self, 'bulk_args'):
+            self.bulk_args = self._client_args('bulk', {})
+            logger.debug('client bulk args: %s' % self.bulk_args)
             
-    def load(self, datacol):
-        bulk_args = self._client_args('bulk', {})
-        if bulk_args:
-            logger.debug('client bulk args: %s' % bulk_args)
-            
+        total = 0
         for success, info in helpers.parallel_bulk(self.client,
-                              self._generate_actions(datacol), **bulk_args):
-            if not success:
+                              self._generate_actions(datacol), **self.bulk_args):
+            if success:
+                total += 1
+                if callback:
+                    callback({'start_time': kwargs['start_time'],
+                              'current': total})
+            else:
                 raise Exception('doc failed: %s' % info)
+        return total
 
     def optimize(self):
         if self.current_indices:
