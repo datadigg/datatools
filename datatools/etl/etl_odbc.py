@@ -47,24 +47,34 @@ class ODBCDataLoader(DataLoader):
         self.conn = pypyodbc.connect(odbc.connstr)
         self.cursor = self.conn.cursor()
         self.table = odbc.table
+        self.commit_size = self.get_attr(config.settings.loader,
+                                         'autoCommitSize') or 1000
 
     def _get_insert_sql(self, cols, table):
         return '''insert into %s(%s)values(%s)'''\
                   % (table, ','.join(cols),','.join('?'*len(cols)))
         
-    def load(self, datacol):
+    def load(self, datacol, callback=None, **kwargs):
         cols,vals = zip(*datacol[0])
         insertsql = self._get_insert_sql(cols, self.table)
-        
-        size = len(datacol)
-        if size > 1:
-            vals_list = []
-            for data in datacol:
-                vals_list.append(zip(*data)[1])
+
+        total = 0
+        vals_list = []
+        for data in datacol:
+            total += 1
+            if callback:
+                callback({'start_time': kwargs['start_time'],
+                          'current': total})
+            vals_list.append(zip(*data)[1])
+            if len(vals_list) == self.commit_size:
+                self.cursor.executemany(insertsql, vals_list)
+                self.conn.commit()
+                vals_list[:] = []
+        if vals_list:
             self.cursor.executemany(insertsql, vals_list)
-        else:
-            self.cursor.execute(insertsql, vals)
-        self.conn.commit()
+            self.conn.commit()
+            
+        return total
         
     def close(self):
         self.conn.close()

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys, argparse
 
-from datatools.etl import etl, etl_mongo
-from datatools.etl.config import Configuration
+from etl import etl, etl_mongo
+from etl.config import Configuration
 
 def main():
         parser = argparse.ArgumentParser(description='ETL(mongo to mongo)')
@@ -15,7 +15,8 @@ def main():
         from settings import configure_logging
         configure_logging()
 
-        config = Configuration(vars(parser.parse_args()))
+        args = parser.parse_args()
+        config = Configuration(vars(args))
         extractor = etl_mongo.MongoDataExtractor(config)
         if args.update:
                 transformer = etl_mongo.MongoUpdateDataTransformer(config)
