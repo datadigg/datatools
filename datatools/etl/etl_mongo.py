@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os, logging, datetime
+import os, logging, datetime, funcutils
 from pymongo import MongoClient
 from etl import DataExtractor,DataLoader,DataTransformer
 from bson.son import SON
