@@ -40,6 +40,7 @@ class ElasticsearchDataLoader(DataLoader):
         logger.debug('index:%s' % es.index)
         logger.debug('doc_type:%s' % es.doc_type)
 
+        self.config = config
         self.es = es
         self._init_client(es)
         self._init_index_template(config)
@@ -62,8 +63,8 @@ class ElasticsearchDataLoader(DataLoader):
 
     def _init_index_template(self, config):
         logger.debug('init index template:')
-        if hasattr(config.args, 'template_name'):
-            template_name = config.args.template_name
+        if hasattr(config.args, 'index_template_name'):
+            template_name = config.args.index_template_name
             if template_name:
                 fn = template_name + '-' + config.args.profile + '.json'
                 logger.debug('template file: %s' % fn)
@@ -79,9 +80,12 @@ class ElasticsearchDataLoader(DataLoader):
             if not self.client.indices.exists(index):
                     self.client.indices.create(index)
                     
-            if 'settings' in self.es:
-                self.client.indices.put_settings(
-                        index=index, body=self.es.settings)
+            if hasattr(self.config.args, 'index_settings'):
+                index_settings = self.config.args.index_settings
+                if index_settings:
+                    logger.debug('index settings: %s' % index_settings)
+                    self.client.indices.put_settings(
+                            index=index, body=index_settings)
         
     def _generate_actions(self, datacol):
         for data in datacol:
