@@ -49,7 +49,7 @@ class ElasticsearchDataLoader(DataLoader):
 
     def _client_args(self, name, kwargs):
         if 'client' in self.es and name in self.es.client:
-            kwargs.update(self.es.client[name]['kwargs'])
+            kwargs.update(self.es.client[name])
         return kwargs
     
     def _init_client(self, es):
