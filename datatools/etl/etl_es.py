@@ -2,7 +2,7 @@
 import os, logging, datetime, json
 from elasticsearch import Elasticsearch, helpers
 from elasticsearch.exceptions import ConnectionTimeout
-from etl import DataExtractor,DataLoader
+from .etl import DataExtractor,DataLoader
 
 logger = logging.getLogger(__name__)
 
