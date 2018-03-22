@@ -29,8 +29,12 @@ class MongoDataExtractor(DataExtractor):
     def getrows(self, top=0):
         query =  eval(self.config.args.query)
         logger.debug('execute query:%s' % query)
-        projection = eval(self.mongodb.projection)
-        return self.collection.find(query, projection)
+        if self.check_attr(self.mongodb, 'projection'):
+            projection = eval(self.mongodb.projection)
+            return self.collection.find(query, projection)
+        else:
+            return self.collection.find(query)
+        
     
     def close(self):
         self.client.close()
