@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import os, sys, time, logging
 
+from .compat2to3 import basestring
+
+
 logger = logging.getLogger(__name__)
 
 class CommonBase(object):
