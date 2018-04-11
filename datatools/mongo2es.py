@@ -4,6 +4,7 @@ import sys, argparse
 from etl import etl, etl_mongo, etl_es
 from etl.config import Configuration
 
+
 def main():
         parser = argparse.ArgumentParser(description='ETL(mongo to es)')
         parser.add_argument('--conf', required=True)
@@ -21,6 +22,7 @@ def main():
         transformer = etl.SimpleDataTransformer(config)
         loader = etl_es.ElasticsearchDataLoader(config)
         etl.etl(config, extractor, transformer, loader)
-        
+
+
 if __name__ == '__main__':
         main()

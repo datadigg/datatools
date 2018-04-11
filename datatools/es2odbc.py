@@ -4,6 +4,7 @@ import sys, argparse
 from etl import etl, etl_es, etl_odbc
 from etl.config import Configuration
 
+
 def main():
         parser = argparse.ArgumentParser(description='ETL(es to odbc)')
         parser.add_argument('--conf', required=True)
@@ -18,6 +19,7 @@ def main():
         transformer = etl.SimpleDataTransformer(config)
         loader = etl_odbc.ODBCDataLoader(config)
         etl.etl(config, extractor, transformer, loader)
-        
+
+
 if __name__ == '__main__':
         main()
