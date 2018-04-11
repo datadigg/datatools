@@ -2,9 +2,10 @@
 import os, logging, datetime, json
 from elasticsearch import Elasticsearch, helpers
 from elasticsearch.exceptions import ConnectionTimeout
-from .etl import DataExtractor,DataLoader
+from .etl import DataExtractor, DataLoader
 
 logger = logging.getLogger(__name__)
+
 
 class ElasticsearchDataExtractor(DataExtractor):
     def __init__(self, config):
@@ -70,11 +71,11 @@ class ElasticsearchDataLoader(DataLoader):
                 logger.debug('template file: %s' % fn)
                 with open(os.path.join(config.args.conf, fn)) as json_data:
                     template_body = json.load(json_data)
-                    self.client.indices.put_template(name = template_name,
-                                                     body = template_body)
+                    self.client.indices.put_template(name=template_name,
+                                                     body=template_body)
 
     def _prepare_settings(self, index):
-        if not index in self.current_indices:
+        if index not in self.current_indices:
             self.current_indices.append(index)
             
             if not self.client.indices.exists(index):
@@ -92,8 +93,8 @@ class ElasticsearchDataLoader(DataLoader):
             index = self.es.index.format(**dict(data))
             self._prepare_settings(index)
             action = {
-                '_index' : index,
-                '_type' : self.es.doc_type
+                '_index': index,
+                '_type': self.es.doc_type
             }
             action.update(data)
             yield action
@@ -104,8 +105,8 @@ class ElasticsearchDataLoader(DataLoader):
             logger.debug('client bulk args: %s' % self.bulk_args)
             
         total = 0
-        for success, info in helpers.parallel_bulk(self.client,
-                              self._generate_actions(datacol), **self.bulk_args):
+        for success, info in helpers.parallel_bulk(
+                self.client, self._generate_actions(datacol), **self.bulk_args):
             if success:
                 total += 1
                 if callback:
@@ -126,6 +127,5 @@ class ElasticsearchDataLoader(DataLoader):
             logger.debug('client merge args: %s' % merge_args)
             try:   
                 self.client.indices.forcemerge(index=index, **merge_args)
-            except ConnectionTimeout as e:
+            except ConnectionTimeout:
                 pass
-        

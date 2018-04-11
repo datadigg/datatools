@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
-import os, logging, datetime
 from pymongo import MongoClient
 from bson.son import SON
 
-from . import funcutils
-from .etl import DataExtractor,DataLoader,DataTransformer
+from .config import get_config
+from .etl import DataExtractor, DataLoader, SimpleDataTransformer
+
+import logging
+import datetime
+import funcutils
 
 logger = logging.getLogger(__name__)
+
 
 class MongoDataExtractor(DataExtractor):
     def __init__(self, config):
@@ -22,80 +26,81 @@ class MongoDataExtractor(DataExtractor):
         self.client = MongoClient(mongodb.host, mongodb.port)
         self.db = self.client[mongodb.db]
         if mongodb.username:
-            self.db.authenticate(mongodb.username, mongodb.password, \
+            self.db.authenticate(mongodb.username, mongodb.password,
                                  source=mongodb.authenticationDatabase)
         self.collection = self.db[mongodb.collection]
 
     def getrows(self, top=0):
-        query =  eval(self.config.args.query)
+        query = eval(self.config.args.query)
         logger.debug('execute query:%s' % query)
-        if self.check_attr(self.mongodb, 'projection'):
+        if hasattr(self.mongodb, 'projection'):
             projection = eval(self.mongodb.projection)
             return self.collection.find(query, projection)
         else:
             return self.collection.find(query)
-        
-    
+
     def close(self):
         self.client.close()
-    
-class MongoUpdateDataTransformer(DataTransformer):
-    def __init__(self, config):
-        self.config = config
 
-    def _clean_digit(self, val):
+
+class MongoUpdateDataTransformer(SimpleDataTransformer):
+    def __init__(self, config, handlers=None):
+        super(MongoUpdateDataTransformer, self).__init__(config, handlers)
+
+    @staticmethod
+    def _clean_digit(val):
         return ''.join(c for c in val if c.isdigit())
-    
-    def _clean_str(self, val):
+
+    @staticmethod
+    def _clean_str(val):
         return ''.join((e.isalnum() and e or '') for e in val).upper()
     
     def _transform(self, fields, row):
         query = {}
         update = {}
         for field in fields:
-            source = self.get_attr(field, 'source')
-            val = row.get(source) or row.get(source.lower())
+            val = self.get_val(row, field)
             if val:
                 if isinstance(val, list):
                     val = ' '.join(val)
                     
-                isdigit = self.get_attr(field, "isdigit")
+                isdigit = field.get('isdigit')
                 if isdigit:
                     val = self._clean_digit(val)
                     
-                indexed = self.get_attr(field, "indexed")
-                name = self.get_attr(field, 'name')
+                indexed = field.get('indexed')
+                name = field.get('name')
                 if indexed:
-                    query = { name : val }
-                op = self.get_attr(field, 'op')
+                    query = {name: val}
+                op = field.get('op')
                 ops = update.get(op)
                 
                 if ops:
-                    ops.update({ name : val })
+                    ops.update({name: val})
                 else:
-                    update[op] = { name : val }
+                    update[op] = {name: val}
                     
-                clean = self.get_attr(field, "clean")
+                clean = field.get("clean")
                 if clean:
-                    update.get(op).update(\
-                        { '__' + name : self._clean_str(val) })
+                    update.get(op).update({'__' + name: self._clean_str(val)})
                            
         if query:
-            return query,update
+            return query, update
     
     def transform(self, row):
         mapping = self.config.settings.transformer.mapping
         if isinstance(mapping, list):
             data = {}
             for conf in mapping:
-                fields = self.get_attr(conf, 'fields')
+                fields = get_config(conf, 'fields')
                 result = self._transform(fields, row)
                 if result:
-                    tag = self.get_attr(conf, 'tag')
+                    tag = get_config(conf, 'tag')
                     data[tag] = result
         else:
             data = self._transform(mapping.fields, row)
         return data
+
 
 class MongoDataLoader(DataLoader):
     def __init__(self, config):
@@ -106,22 +111,21 @@ class MongoDataLoader(DataLoader):
 
         self.client = MongoClient(mongodb.host, mongodb.port)
         self.collection = self._get_collection(mongodb)
-        self.commit_size = self.get_attr(config.settings.loader,
-                                         'autoCommitSize') or 1000
+        self.commit_size = get_config(config.settings.loader, 'autoCommitSize') or 1000
 
     def _get_collection(self, conf):
-        db = self.get_attr(conf, 'db')
-        collection = self.get_attr(conf, 'collection')
+        db = get_config(conf, 'db')
+        collection = get_config(conf, 'collection')
         logger.debug('db:%s' % db)
         logger.debug('collection:%s' % collection)
         db = self.client[db]
-        username = self.get_attr(conf, 'username')
+        username = get_config(conf, 'username')
         if username:
-            password = self.get_attr(conf, 'password')
-            authsource = self.get_attr(conf, 'authenticationDatabase')
+            password = get_config(conf, 'password')
+            authsource = get_config(conf, 'authenticationDatabase')
             db.authenticate(username, password, source=authsource)
         collection = db[collection]
-        index_key = self.get_attr(conf, 'indexKey')
+        index_key = get_config(conf, 'indexKey')
         if index_key:
             collection.ensure_index(index_key, unique=True)
         return collection
@@ -134,7 +138,7 @@ class MongoDataLoader(DataLoader):
             if callback:
                 callback({'start_time': kwargs['start_time'],
                           'current': total})
-            doc = SON([(name,val) for name,val in data
+            doc = SON([(name, val) for name, val in data
                        if val is not None])
             docs.append(doc)
             if len(docs) == self.commit_size:
@@ -147,6 +151,7 @@ class MongoDataLoader(DataLoader):
     def close(self):
         self.client.close()
 
+
 class MongoUpdateDataLoader(MongoDataLoader):
     def __init__(self, config):
         mongodb = config.settings.loader.mongodb
@@ -158,7 +163,7 @@ class MongoUpdateDataLoader(MongoDataLoader):
         if hasattr(mongodb, 'dbs'):
             self.collections = {}
             for conf in mongodb.dbs:
-                tag = self.get_attr(conf, 'tag')
+                tag = get_config(conf, 'tag')
                 logger.debug('-' * 30)
                 logger.debug('tag:%s' % tag)
                 collection = self._get_collection(conf)
