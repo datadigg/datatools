@@ -98,9 +98,6 @@ def etl(config, extractor, transformer, loader, callback=console_callback):
                 data = transformer.transform(row)
                 if data is not None:
                     yield data
-
-        if callback:
-            callback.start_time = start_time
         
         total = loader.load(generate_data(extractor, transformer),
                             callback, start_time=start_time)        
