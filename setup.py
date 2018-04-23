@@ -1,7 +1,11 @@
-import uuid
 from setuptools import setup, find_packages
+try:  # for pip >= 10
+    from pip._internal.req import parse_requirements
+except ImportError:  # for pip <= 9.0.3
+    from pip.req import parse_requirements
+
 import os
-from pip.req import parse_requirements
+import uuid
 
 # parse_requirements() returns generator of pip.req.InstallRequirement objects
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
