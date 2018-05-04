@@ -96,7 +96,8 @@ class ElasticsearchDataLoader(DataLoader):
                 '_index': index,
                 '_type': self.es.doc_type
             }
-            action.update(data)
+            action.update({name: val for name, val in data
+                           if val is not None})
             yield action
     
     def load(self, datacol, callback=None, **kwargs):
