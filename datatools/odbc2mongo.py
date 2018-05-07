@@ -10,6 +10,7 @@ def main():
         parser.add_argument('--conf', required=True)
         parser.add_argument('--profile', required=False)
         parser.add_argument('--dbfile', required=False)
+        parser.add_argument('--optimize', action='store_true', default=False)
         parser.add_argument('--update', action='store_true', default=False)
         parser.add_argument('--settings', required=False, default='{}')
 

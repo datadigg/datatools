@@ -10,6 +10,7 @@ def main():
         parser.add_argument('--conf', required=True)
         parser.add_argument('--profile', required=True)
         parser.add_argument('--query', required=True)
+        parser.add_argument('--optimize', action='store_true', default=False)
         parser.add_argument('--settings', required=False, default='{}')
 
         from settings import configure_logging

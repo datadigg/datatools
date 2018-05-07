@@ -2,6 +2,7 @@
 import os, logging, datetime, json
 from elasticsearch import Elasticsearch, helpers
 from elasticsearch.exceptions import ConnectionTimeout
+
 from .etl import DataExtractor, DataLoader
 
 logger = logging.getLogger(__name__)
@@ -101,13 +102,12 @@ class ElasticsearchDataLoader(DataLoader):
             yield action
     
     def load(self, datacol, callback=None, **kwargs):
-        if not hasattr(self, 'bulk_args'):
-            self.bulk_args = self._client_args('bulk', {})
-            logger.debug('client bulk args: %s' % self.bulk_args)
+        bulk_args = self._client_args('bulk', {})
+        logger.debug('client bulk args: %s' % bulk_args)
             
         total = 0
         for success, info in helpers.parallel_bulk(
-                self.client, self._generate_actions(datacol), **self.bulk_args):
+                self.client, self._generate_actions(datacol), **bulk_args):
             if success:
                 total += 1
                 if callback:

@@ -10,6 +10,7 @@ def main():
         parser.add_argument('--conf', required=True)
         parser.add_argument('--profile', required=True)
         parser.add_argument('--query', required=True)
+        parser.add_argument('--optimize', action='store_true', default=False)
         parser.add_argument('--index-template-name', required=False)
         parser.add_argument('--index-settings', required=False)
         parser.add_argument('--settings', required=False, default='{}')
