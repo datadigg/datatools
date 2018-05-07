@@ -103,9 +103,10 @@ def etl(config, extractor, transformer, loader, callback=console_callback):
                             callback, start_time=start_time)        
         elapsed_time = time.time() - start_time
         logger.info('insert total:%d, execution time:%.3f' % (total, elapsed_time))
-        
+
         # optional optimize
-        loader.optimize()
+        if config.args.optimize:
+            loader.optimize()
 
         return start_time, total
     except Exception as e:
