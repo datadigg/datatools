@@ -30,8 +30,10 @@ class Configuration(object):
         file_path = os.path.join(args.conf, fn)
         if os.path.exists(file_path):
             logger.debug('loading:%s' % file_path)
-            docs = yaml.load_all(open(file_path,'r'))
-            profile = args.profile or 'default'
-            d = next(doc for doc in docs if doc.get('profile') == profile)
+            docs = yaml.load_all(open(file_path, 'r'))
+            if args.profile:
+                d = next(doc for doc in docs if doc.get('profile') == args.profile)
+            else:
+                d = next(docs)
             
         return NestedDict(d)
