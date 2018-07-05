@@ -8,8 +8,8 @@ from etl.config import Configuration
 def main():
         parser = argparse.ArgumentParser(description='ETL(mongo to es)')
         parser.add_argument('--conf', required=True)
-        parser.add_argument('--profile', required=True)
         parser.add_argument('--query', required=True)
+        parser.add_argument('--profile', required=False)
         parser.add_argument('--optimize', action='store_true', default=False)
         parser.add_argument('--index-template-name', required=False)
         parser.add_argument('--index-settings', required=False)

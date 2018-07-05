@@ -68,7 +68,10 @@ class ElasticsearchDataLoader(DataLoader):
         if hasattr(config.args, 'index_template_name'):
             template_name = config.args.index_template_name
             if template_name:
-                fn = template_name + '-' + config.args.profile + '.json'
+                if config.args.profile:
+                    fn = template_name + '-' + config.args.profile + '.json'
+                else:
+                    fn = template_name + '.json'
                 logger.debug('template file: %s' % fn)
                 with open(os.path.join(config.args.conf, fn)) as json_data:
                     template_body = json.load(json_data)
