@@ -6,22 +6,22 @@ from etl.config import Configuration
 
 
 def main():
-        parser = argparse.ArgumentParser(description='ETL(mongo to odbc)')
-        parser.add_argument('--conf', required=True)
-        parser.add_argument('--query', required=True)
-        parser.add_argument('--profile', required=False)
-        parser.add_argument('--optimize', action='store_true', default=False)
-        parser.add_argument('--settings', required=False, default='{}')
+    parser = argparse.ArgumentParser(description='ETL(mongo to odbc)')
+    parser.add_argument('--conf', required=True)
+    parser.add_argument('--query', required=True)
+    parser.add_argument('--profile', required=False)
+    parser.add_argument('--optimize', action='store_true', default=False)
+    parser.add_argument('--settings', required=False, default='{}')
 
-        from settings import configure_logging
-        configure_logging()
+    from settings import configure_logging
+    configure_logging()
         
-        config = Configuration(vars(parser.parse_args()))
-        extractor = etl_mongo.MongoDataExtractor(config)
-        transformer = etl.SimpleDataTransformer(config)
-        loader = etl_odbc.ODBCDataLoader(config)
-        etl.etl(config, extractor, transformer, loader)
+    config = Configuration(vars(parser.parse_args()))
+    extractor = etl_mongo.MongoDataExtractor(config)
+    transformer = etl.SimpleDataTransformer(config)
+    loader = etl_odbc.ODBCDataLoader(config)
+    etl.etl(config, extractor, transformer, loader)
 
 
 if __name__ == '__main__':
-        main()
+    main()
