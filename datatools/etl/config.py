@@ -27,7 +27,7 @@ class Configuration(object):
     @staticmethod
     def _get_config(args, fn):
         d = {}
-        file_path = os.path.join(args.conf, fn)
+        file_path = os.path.join(args.conf_dir, fn)
         if os.path.exists(file_path):
             logger.debug('loading:%s' % file_path)
             docs = yaml.load_all(open(file_path, 'r'))

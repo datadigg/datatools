@@ -7,7 +7,7 @@ from etl.config import Configuration
 
 def main():
     parser = argparse.ArgumentParser(description='ETL(es to odbc)')
-    parser.add_argument('--conf', required=True)
+    parser.add_argument('--conf', '--conf-dir', required=True)
     parser.add_argument('--profile', required=True)
     parser.add_argument('--body', required=True)
     parser.add_argument('--optimize', action='store_true', default=False)
