@@ -25,7 +25,7 @@ setup(
 
     # Application author details:
     author="Xu Cheng",
-    author_email="cheng.xu@tendata.cn",
+    author_email="bd66_6@hotmail.com",
 
     # Packages
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
@@ -34,11 +34,11 @@ setup(
     include_package_data=True,
 
     # Details
-    url="http://pypi.tendata.cn/pypi/datatools_v010",
+    # url="http://pypi.abc.com/pypi/datatools_v010",
 
     #
     # license="LICENSE.txt",
-    description="Data Tools",
+    description="Simple ETL Data Tools",
 
     long_description=open("README.md").read(),
 
