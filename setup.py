@@ -21,10 +21,10 @@ setup(
     name="datatools",
 
     # Version number (initial):
-    version="0.2.0",
+    version="0.3.0",
 
     # Application author details:
-    author="Xu Cheng",
+    author="tutunannan",
     author_email="bd66_6@hotmail.com",
 
     # Packages
@@ -34,7 +34,7 @@ setup(
     include_package_data=True,
 
     # Details
-    # url="http://pypi.abc.com/pypi/datatools_v010",
+    # url="http://pypi.abc.com/pypi/datatools_v030",
 
     #
     # license="LICENSE.txt",
