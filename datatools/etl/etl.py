@@ -33,6 +33,16 @@ class SimpleDataTransformer(DataTransformer):
             val = ' '.join(val.split())
         return val
 
+    @staticmethod
+    def _convert_type(field, val):
+        field_type = field.get('type')
+        if field_type == 'str':
+            val = val and str(val) or val
+        elif field_type == 'date_str':
+            fmt = field.get('format')
+            val = val and val.strftime(fmt) or val
+        return val
+
     def _process_handler(self, name, field, val):
         if self.handlers:
             handler = self.handlers.get(name)
@@ -40,34 +50,44 @@ class SimpleDataTransformer(DataTransformer):
                 val = handler.handle(field, val)
         return val
 
+    def _get_row_val(self, row, field, source):
+        val = row.get(source) or row.get(source.lower())
+        return self._strfix(self._convert_type(field, val))
+
+    def _get_row_vals(self, row, field, sources):
+        vals = []
+        for source in sources:
+            val = self._get_row_val(row, field, source)
+            if val is not None:
+                vals.append(val)
+
+        return vals and vals or None
+
     def get_val(self, row, field):
         val = None
         source = field.get('source')
         if source:
-            val = row.get(source) or row.get(source.lower())
+            if isinstance(source, list):
+                val = self._get_row_vals(row, field, source)
+            else:
+                val = self._get_row_val(row, field, source)
+
             handler_name = field.get('handler')
             if handler_name:
                 val = self._process_handler(handler_name, field, val)
 
         if not val and 'default' in field:
-            val = field.get('default')
-
-        field_type = field.get('type')
-        if field_type == 'str':
-            val = val and str(val) or val
-        elif field_type == 'date_str':
-            fmt = field.get('format')
-            val = val and val.strftime(fmt) or val
+            val = self._convert_type(field, field.get('default'))
         
         return val
-    
+
     def transform(self, row):
         vals = []
         fields = self.config.settings.transformer.mapping.fields
         for field in fields:
             val = self.get_val(row, field)
             name = field.get('name')
-            vals.append((name, self._strfix(val)))
+            vals.append((name, val))
                            
         return vals
             
