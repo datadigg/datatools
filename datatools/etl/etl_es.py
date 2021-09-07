@@ -73,7 +73,7 @@ class ElasticsearchDataLoader(DataLoader):
                 else:
                     fn = template_name + '.json'
                 logger.debug('template file: %s' % fn)
-                with open(os.path.join(config.args.conf, fn)) as json_data:
+                with open(os.path.join(config.args.conf_dir, fn)) as json_data:
                     template_body = json.load(json_data)
                     self.client.indices.put_template(name=template_name,
                                                      body=template_body)

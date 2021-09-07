@@ -7,7 +7,7 @@ from etl.config import Configuration
 
 def main():
     parser = argparse.ArgumentParser(description='ETL(odbc to mongo)')
-    parser.add_argument('--conf', '--conf-dir', required=True)
+    parser.add_argument('--conf-dir', required=True)
     parser.add_argument('--profile', required=False)
     parser.add_argument('--dbfile', required=False)
     parser.add_argument('--optimize', action='store_true', default=False)
